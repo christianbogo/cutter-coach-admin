@@ -70,6 +70,7 @@ export interface Meet {
 
 export interface Event {
   id: string;
+  code: string;
   nameLong: string;
   nameShort: string;
   course: string;
