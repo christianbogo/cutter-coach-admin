@@ -48,6 +48,9 @@ export interface Season {
   nameLong: string;
   nameShort: string;
 
+  startDate: string;
+  endDate: string;
+
   isComplete: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
