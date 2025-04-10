@@ -48,11 +48,6 @@ export const IndividualResultProvider: React.FC<{
   const eventsCollectionRef = collection(db, "events");
   const athletesCollectionRef = collection(db, "athletes");
 
-  useEffect(() => {
-    console.log("persons:", persons);
-    console.log("athletes:", athletes);
-  }, [persons, athletes]);
-
   // --- Fetch Helper Collections ---
   const fetchHelperCollections = async () => {
     try {

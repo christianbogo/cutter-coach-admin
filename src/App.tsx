@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarLayout } from "./components/layout/SidebarLayout";
 import PeopleCRUD from "./pages/crud/PeopleCRUD";
@@ -19,8 +18,6 @@ import { IndividualResultProvider } from "./contexts/IndividualResultContext";
 import IndividualResultCRUD from "./pages/crud/IndividualResultCRUD";
 import { RelayResultProvider } from "./contexts/RelayResultContext";
 import RelayResultCRUD from "./pages/crud/RelayResultCRUD";
-
-// Import other components as needed
 
 function App() {
   return (
