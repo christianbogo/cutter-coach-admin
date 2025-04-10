@@ -63,6 +63,8 @@ export interface Meet {
 
   season: string; // references seasonId
 
+  eventOrder: string[]; // references eventId
+
   isComplete: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -84,6 +86,7 @@ export interface IndividualResult {
 
   meet: string; // references meetId
   event: string; // references eventId
+  eventNumber: number;
   athlete: string; // references athleteId
 
   result: number;
@@ -98,6 +101,7 @@ export interface RelayResult {
 
   meet: string; // references meetId
   event: string; // references eventId
+  eventNumber: number;
   first: string; // references athleteId
   second: string; // references athleteId
   third: string; // references athleteId
