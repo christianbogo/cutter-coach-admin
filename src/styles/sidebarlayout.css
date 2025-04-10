@@ -1,8 +1,8 @@
 /* Sidebar Layout Styles */
 .layout-container {
   display: flex;
-  height: 100vh; /* Full viewport height */
   width: 100%;
+  min-height: 100vh; /* Full height */
 }
 
 .sidebar {

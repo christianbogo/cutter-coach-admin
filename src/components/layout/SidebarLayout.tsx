@@ -15,9 +15,11 @@ export const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     { name: "Teams", path: "/teams", icon: <span>👥</span> },
     { name: "Seasons", path: "/seasons", icon: <span>📅</span> },
     { name: "Athletes", path: "/athletes", icon: <span>🏃</span> },
+    { name: "Contacts", path: "/contacts", icon: <span>📇</span> },
     { name: "Meets", path: "/meets", icon: <span>📍</span> },
     { name: "Events", path: "/events", icon: <span>🏆</span> },
-    { name: "Results", path: "/results", icon: <span>📊</span> },
+    { name: "Individual Results", path: "/ind-results", icon: <span>📊</span> },
+    { name: "Relay Results", path: "/relay-results", icon: <span>🏅</span> },
   ];
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Start with it open on larger screens

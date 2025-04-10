@@ -8,6 +8,9 @@ export interface Person {
   birthday: string; // 'YYYY-MM-DD'
   gender: "M" | "F" | "O";
 
+  phone: string;
+  email: string;
+
   isArchived: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -28,10 +31,16 @@ export interface Athlete {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
+
 export interface Contact {
+  id: string;
+  contact: string; // references personId
   relationship: string;
-  person: string; // references personId
+  recipient: string; // references personId
+  isEmergency: boolean;
+  recievesEmail: boolean;
 }
+
 export interface Team {
   id: string;
   code: string;
@@ -43,8 +52,10 @@ export interface Team {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
+
 export interface Season {
   id: string;
+  team: string; // references teamId
   nameLong: string;
   nameShort: string;
 
@@ -55,6 +66,7 @@ export interface Season {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
+
 export interface Meet {
   id: string;
   nameLong: string;
@@ -86,8 +98,11 @@ export interface IndividualResult {
 
   meet: string; // references meetId
   event: string; // references eventId
-  eventNumber: number;
   athlete: string; // references athleteId
+
+  team: string; // references teamId determined by the athlete's team
+  season: string; // references seasonId determined by the athlete's season
+  age: number; // calculated by determining the athlete's age at the time of the meet
 
   result: number;
   dq: boolean;
@@ -101,11 +116,11 @@ export interface RelayResult {
 
   meet: string; // references meetId
   event: string; // references eventId
-  eventNumber: number;
-  first: string; // references athleteId
-  second: string; // references athleteId
-  third: string; // references athleteId
-  forth: string; // references athleteId
+
+  athletes: string[]; // references athleteId
+
+  team: string; // references teamId determined by the athlete's team
+  season: string; // references seasonId determined by the athlete's season
 
   result: number;
   dq: boolean;
