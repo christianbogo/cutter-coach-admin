@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { usePeopleContext } from "../../contexts/PeopleContext";
 import { Person } from "../../models/index";
+import * as XLSX from "xlsx";
+
 import "../../styles/crud-page.css";
 
 const PeopleCRUD: React.FC = () => {
-  const { people, loading, error, createPerson, updatePerson, deletePerson } = usePeopleContext();
+  const { people, loading, error, createPerson, updatePerson, deletePerson, bulkCreatePeople } =
+    usePeopleContext();
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
@@ -12,6 +15,10 @@ const PeopleCRUD: React.FC = () => {
     direction: "ascending" | "descending" | null;
   }>({ key: null, direction: null });
   const [filterValue, setFilterValue] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the file input
+  const [bulkUploadLoading, setBulkUploadLoading] = useState(false);
+  const [bulkUploadError, setBulkUploadError] = useState<string | null>(null);
 
   // --- Sorting ---
   const requestSort = (key: keyof Person) => {
@@ -71,6 +78,59 @@ const PeopleCRUD: React.FC = () => {
     closeModal();
   };
 
+  // --- Bulk Upload Handler ---
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setBulkUploadLoading(true);
+      setBulkUploadError(null);
+      const allParsedData: Omit<Person, "id" | "createdAt" | "updatedAt">[] = [];
+
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data);
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const parsedData: Omit<Person, "id" | "createdAt" | "updatedAt">[] =
+            XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          // Assuming the first row is the header, extract data from the following rows
+          const headers = parsedData[0] as unknown as string[];
+          const peopleData = (parsedData.slice(1) as unknown as any[][]).map((row: any[]) => {
+            const person: Omit<Person, "id" | "createdAt" | "updatedAt"> = {
+              firstName: row[headers.indexOf("firstName")],
+              preferredName: row[headers.indexOf("preferredName")] || "", // Handle potential missing values
+              lastName: row[headers.indexOf("lastName")],
+              birthday: row[headers.indexOf("birthday")],
+              gender: row[headers.indexOf("gender")],
+              phone: row[headers.indexOf("phone")] || "",
+              email: row[headers.indexOf("email")] || "",
+              isArchived: false, // Default value for isArchived
+            };
+            return person;
+          });
+          allParsedData.push(...peopleData);
+        }
+
+        if (allParsedData.length > 0) {
+          await bulkCreatePeople(allParsedData);
+        } else {
+          setBulkUploadError("No data found in the selected files.");
+        }
+      } catch (error: any) {
+        setBulkUploadError(`Error reading or processing Excel files: ${error.message}`);
+      } finally {
+        setBulkUploadLoading(false);
+        // Optionally clear the file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    }
+  };
+
   return (
     <div className="crud-container">
       <h1 className="crud-title">People</h1>
@@ -79,6 +139,18 @@ const PeopleCRUD: React.FC = () => {
         <button className="crud-button create-button" onClick={() => openModal()}>
           Add Person
         </button>
+        <div>
+          <input
+            className="crud-button bulk-upload-button"
+            type="file"
+            multiple
+            accept=".xlsx"
+            onChange={handleBulkUpload}
+            ref={fileInputRef}
+          />
+          {bulkUploadLoading && <p>Uploading and processing files...</p>}
+          {bulkUploadError && <p className="error-message">Bulk Upload Error: {bulkUploadError}</p>}
+        </div>
         <input
           type="text"
           className="crud-filter"

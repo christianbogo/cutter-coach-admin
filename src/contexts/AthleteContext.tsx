@@ -9,6 +9,7 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 
 interface AthleteContextType {
@@ -23,6 +24,10 @@ interface AthleteContextType {
   people: Person[];
   seasons: Season[];
   teams: Team[];
+  bulkCreateAthletes: (
+    // New function
+    athletesToAdd: Omit<Athlete, "id" | "createdAt" | "updatedAt">[]
+  ) => Promise<void>;
 }
 
 const AthleteContext = createContext<AthleteContextType | undefined>(undefined);
@@ -183,6 +188,32 @@ export const AthleteProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const bulkCreateAthletes = async (
+    athletesToAdd: Omit<Athlete, "id" | "createdAt" | "updatedAt">[]
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    const batch = writeBatch(db);
+    athletesToAdd.forEach((athlete) => {
+      const docRef = doc(athletesCollectionRef); // Firestore will auto-generate the ID
+      batch.set(docRef, {
+        ...athlete,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    });
+
+    try {
+      await batch.commit();
+      await fetchAthletes();
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Error creating athletes in bulk");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAthletes();
     fetchHelperCollections(); // Fetch people, seasons, and teams on mount
@@ -200,6 +231,7 @@ export const AthleteProvider: React.FC<{ children: React.ReactNode }> = ({ child
     people,
     seasons,
     teams,
+    bulkCreateAthletes,
   };
 
   return <AthleteContext.Provider value={value}>{children}</AthleteContext.Provider>;

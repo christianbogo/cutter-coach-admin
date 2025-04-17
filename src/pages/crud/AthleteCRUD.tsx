@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useAthleteContext } from "../../contexts/AthleteContext";
 import { Athlete, Team, Season, Person } from "../../models/index";
+import AthleteBulkUpload from "../../components/AthleteBulkUpload";
+
 import "../../styles/crud-page.css";
 
 const AthleteCRUD: React.FC = () => {
@@ -23,6 +25,25 @@ const AthleteCRUD: React.FC = () => {
   const [filterValue, setFilterValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Helper functions to get names from IDs
+  const getPersonName = (personId: string | undefined) => {
+    if (!personId) return "None";
+    const person = people.find((p) => p.id === personId);
+    return person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
+  };
+
+  const getSeasonName = (seasonId: string | undefined) => {
+    if (!seasonId) return "None";
+    const season = seasons.find((s) => s.id === seasonId);
+    return season ? season.nameShort : "Unknown Season";
+  };
+
+  const getTeamName = (teamId: string | undefined) => {
+    if (!teamId) return "None";
+    const team = teams.find((t) => t.id === teamId);
+    return team ? team.nameShort : "Unknown Team";
+  };
+
   // --- Sorting ---
   const requestSort = (key: keyof Athlete) => {
     let direction: "ascending" | "descending" | null = "ascending";
@@ -37,8 +58,8 @@ const AthleteCRUD: React.FC = () => {
     const key = sortConfig.key;
 
     sortedAthletes.sort((a, b) => {
-      const aValue = a[key];
-      const bValue = b[key];
+      const aValue = key === "person" ? getPersonName(a.person) : a[key];
+      const bValue = key === "person" ? getPersonName(b.person) : b[key];
 
       if (aValue === undefined || bValue === undefined) return 0;
 
@@ -81,25 +102,6 @@ const AthleteCRUD: React.FC = () => {
     closeModal();
   };
 
-  // Helper functions to get names from IDs
-  const getPersonName = (personId: string | undefined) => {
-    if (!personId) return "None";
-    const person = people.find((p) => p.id === personId);
-    return person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
-  };
-
-  const getSeasonName = (seasonId: string | undefined) => {
-    if (!seasonId) return "None";
-    const season = seasons.find((s) => s.id === seasonId);
-    return season ? season.nameLong : "Unknown Season";
-  };
-
-  const getTeamName = (teamId: string | undefined) => {
-    if (!teamId) return "None";
-    const team = teams.find((t) => t.id === teamId);
-    return team ? team.nameLong : "Unknown Team";
-  };
-
   return (
     <div className="crud-container">
       <h1 className="crud-title">Athletes</h1>
@@ -114,6 +116,11 @@ const AthleteCRUD: React.FC = () => {
           placeholder="Filter..."
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
+        />
+        <AthleteBulkUpload // Add the bulk upload component
+          people={people}
+          seasons={seasons}
+          teams={teams}
         />
       </div>
 
@@ -173,7 +180,7 @@ const AthleteCRUD: React.FC = () => {
                   <td className="table-cell-grade">{athlete.grade}</td>
                   <td className="table-cell-group">{athlete.group}</td>
                   <td className="table-cell-subgroup">{athlete.subgroup}</td>
-                  <td className="table-cell-lane">{athlete.lane}</td>
+                  <td className="table-cell-lane">{athlete.lane !== 0 ? athlete.lane : ""}</td>
                   <td className="table-cell-hasDisability">
                     {athlete.hasDisability ? "Yes" : "No"}
                   </td>

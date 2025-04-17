@@ -9,6 +9,7 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 
 interface PeopleContextType {
@@ -20,6 +21,9 @@ interface PeopleContextType {
   createPerson: (person: Person) => Promise<void>;
   updatePerson: (person: Person) => Promise<void>;
   deletePerson: (id: string) => Promise<void>;
+  bulkCreatePeople: (
+    peopleToAdd: Omit<Person, "id" | "createdAt" | "updatedAt">[]
+  ) => Promise<void>; // New function
 }
 
 const PeopleContext = createContext<PeopleContextType | undefined>(undefined);
@@ -46,8 +50,8 @@ export const PeopleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           lastName: data.lastName,
           birthday: data.birthday,
           gender: data.gender,
-          phone: data.phone, // Add phone
-          email: data.email, // Add email
+          phone: data.phone,
+          email: data.email,
           isArchived: data.isArchived,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
@@ -70,8 +74,8 @@ export const PeopleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         lastName: newPerson.lastName,
         birthday: newPerson.birthday,
         gender: newPerson.gender,
-        phone: newPerson.phone, // Add phone
-        email: newPerson.email, // Add email
+        phone: newPerson.phone,
+        email: newPerson.email,
         isArchived: newPerson.isArchived,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -91,8 +95,8 @@ export const PeopleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         lastName: updatedPerson.lastName,
         birthday: updatedPerson.birthday,
         gender: updatedPerson.gender,
-        phone: updatedPerson.phone, // Add phone
-        email: updatedPerson.email, // Add email
+        phone: updatedPerson.phone,
+        email: updatedPerson.email,
         isArchived: updatedPerson.isArchived,
         updatedAt: Timestamp.now(),
       });
@@ -112,6 +116,55 @@ export const PeopleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  // --- Bulk Create Operation ---
+  const bulkCreatePeople = async (
+    peopleToAdd: Omit<Person, "id" | "createdAt" | "updatedAt">[]
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    // Filter out any potentially empty rows first
+    const validPeopleToAdd = peopleToAdd.filter((person) => {
+      return (
+        person.firstName && person.lastName && person.gender
+        // Add other mandatory fields as needed
+      );
+    });
+
+    if (validPeopleToAdd.length === 0) {
+      setError("No valid people data to add.");
+      setLoading(false);
+      return; // Exit if no valid data
+    }
+
+    const batch = writeBatch(db);
+    validPeopleToAdd.forEach((person) => {
+      const docRef = doc(peopleCollectionRef); // Firestore will auto-generate the ID
+
+      batch.set(docRef, {
+        firstName: person.firstName,
+        preferredName: person.preferredName || "",
+        lastName: person.lastName,
+        birthday: person.birthday || "", // Directly use the string
+        gender: person.gender,
+        phone: person.phone || "",
+        email: person.email || "",
+        isArchived: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    });
+
+    try {
+      await batch.commit();
+      await fetchPeople();
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Error creating people in bulk");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPeople();
   }, []);
@@ -125,6 +178,7 @@ export const PeopleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     createPerson,
     updatePerson,
     deletePerson,
+    bulkCreatePeople, // Add the new function to the context value
   };
 
   return <PeopleContext.Provider value={value}>{children}</PeopleContext.Provider>;
